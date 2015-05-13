@@ -1,4 +1,4 @@
-RESTful app in Python comapred to one written in Go
+RESTful app in Python translated into Go
 ---
 
 The purpose of this is to show how a RESTful app written in Python
@@ -46,6 +46,25 @@ WebTest==2.0.18
 Go uses only standard library.
 
 
+Overview
+--------
+Function `handler()` is defined which reads the request body, then calls
+`parse()`, which parses the input, and formats it into output string,
+and returns. Handle then sends that string as response. All errors
+result in 400, with string error message.
+
+
+Run
+---
+Python runs on `127.0.0.1:8081`:
+```shell
+python srv.py
+```
+Go runs on `127.0.0.1:8082`:
+```shell
+go run srv.go
+```
+
 Logging
 -------
 ```python
@@ -68,7 +87,7 @@ def handle():
   ...
 ```
 ```go
-http.HandleFunc("/", root)
+http.HandleFunc("/", handle)
 ```
 
 
