@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func TestRoot(t *testing.T) {
+func TestHandle(t *testing.T) {
 
 	ts := httptest.NewServer(nil)
 	defer ts.Close()

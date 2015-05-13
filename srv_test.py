@@ -11,7 +11,9 @@ import srv
 
 class SrvTest(unittest.TestCase):
 
-    def test_root(self):
+    def test_handle(self):
+
+        app = webtest.TestApp(srv.app)
 
         tests = [
             {"in": '{"name":"Monkey","age":10}', "out": "Monkey's age is 10\n", "code": 200},
@@ -20,8 +22,6 @@ class SrvTest(unittest.TestCase):
             {"in": '{"name":"Monkey"}', "out": "400 Bad Request: 'age' is required\n", "code": 400},
             {"in": '', "out": "400 Bad Request: No JSON object could be decoded\n", "code": 400},
         ]
-
-        app = webtest.TestApp(srv.app)
 
         for test in tests:
             response = app.post('/', test["in"], status=test["code"])

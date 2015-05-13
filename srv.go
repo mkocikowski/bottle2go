@@ -11,7 +11,7 @@ import (
 
 func init() {
 	log.SetFlags(log.LstdFlags | log.Llongfile)
-	http.HandleFunc("/", root)
+	http.HandleFunc("/", handle)
 }
 
 func error400(w http.ResponseWriter, err error) {
@@ -43,7 +43,7 @@ func parse(body []byte) (map[string]interface{}, error) {
 	return data, nil
 }
 
-func root(w http.ResponseWriter, r *http.Request) {
+func handle(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/plain")
 	body, _ := ioutil.ReadAll(r.Body)

@@ -10,6 +10,7 @@ app = bottle.Bottle()
 
 @app.error(400)
 def error400(err):
+    logger.error(err)
     return "400 Bad Request: %s\n" % err.body
 
 
@@ -28,7 +29,7 @@ def parse(body):
 
 
 @app.post('/')
-def root():
+def handle():
 
     try:
 
@@ -41,7 +42,6 @@ def root():
         return s
 
     except (StandardError,) as exc:
-        logger.error(exc)
         raise bottle.HTTPError(status=400, body=exc)
 
 
