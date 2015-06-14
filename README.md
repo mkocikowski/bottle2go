@@ -1,6 +1,12 @@
 RESTful app in Python translated into Go
 ---
 
+This branch has as close a translation from python to go as possible.
+Look at the
+(go-idiomatic)[https://github.com/mkocikowski/bottle2go/tree/go-idiomatic]
+branch to see the 'proper' go way of doing this. (thanks
+https://github.com/campoy !)
+
 The purpose of this is to show how a RESTful app written in Python
 (using Bottle) translates into Go. The app accepts `POST /`, with the
 body being a json object `{"name":"Monkey","age":10}`. Input is
