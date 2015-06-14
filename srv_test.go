@@ -10,7 +10,7 @@ import (
 
 func TestHandle(t *testing.T) {
 
-	ts := httptest.NewServer(nil)
+	ts := httptest.NewServer(errorHandler(handle))
 	defer ts.Close()
 
 	tests := []struct{
@@ -19,10 +19,10 @@ func TestHandle(t *testing.T) {
 		status int
 	}{
 		{`{"name":"Monkey","age":10}`, "Monkey's age is 10\n", 200},
-		{`{"name":"Monkey","age":10.1}`, "Monkey's age is 10\n", 200},
-		{`{"name":"Monkey","age":"10"}`, "400 Bad Request: 'age' must be a number\n", 400},
-		{`{"name":"Monkey"}`, "400 Bad Request: 'age' is required\n", 400},
-		{"", "400 Bad Request: unexpected end of JSON input\n", 400},
+		{`{"name":"Monkey","age":10.1}`, "json: cannot unmarshal number 10.1 into Go value of type int64\n", 400},
+		{`{"name":"Monkey","age":"10"}`, "json: cannot unmarshal string into Go value of type int64\n", 400},
+		{`{"name":"Monkey"}`, "name and age are required\n", 400},
+		{"", "EOF\n", 400},
 	}
 
 	for _, test := range tests   {

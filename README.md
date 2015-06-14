@@ -1,6 +1,9 @@
 RESTful app in Python translated into Go
 ---
 
+This branch has the idiomatic go server. The 'main' branch has as close
+a translation of python to go as possible.
+
 The purpose of this is to show how a RESTful app written in Python
 (using Bottle) translates into Go. The app accepts `POST /`, with the
 body being a json object `{"name":"Monkey","age":10}`. Input is
@@ -45,15 +48,6 @@ WebTest==2.0.18
 ```
 Go uses only standard library.
 
-
-Overview
---------
-Function `handler()` is defined which reads the request body, then calls
-`parse()`, which parses the input, and formats it into output string,
-and returns. Handle then sends that string as response. All errors
-result in 400, with string error message.
-
-
 Run
 ---
 Python runs on `127.0.0.1:8081`:
@@ -65,118 +59,6 @@ Go runs on `127.0.0.1:8082`:
 go run srv.go
 ```
 
-Logging
--------
-```python
-logger = logging.getLogger(__name__)
-logging.basicConfig(
-  level=logging.DEBUG,
-  format='%(levelname)s %(filename)s:%(funcName)s:%(lineno)d %(message)s'
-)
-```
-```go
-log.SetFlags(log.LstdFlags | log.Llongfile)
-```
-
-
-Routes
-------
-```python
-@app.post('/')
-def handle():
-  ...
-```
-```go
-http.HandleFunc("/", handle)
-```
-
-
-Errors
-------
-```python
-@app.error(400)
-def error400(err):
-    logger.error(err)
-    return "400 Bad Request: %s\n" % err.body
-...
-raise bottle.HTTPError(status=400, body=exc)
-```
-```go
-func error400(w http.ResponseWriter, err error) {
-	log.Println(err)
-	http.Error(w, "400 Bad Request: "+err.Error(), 400)
-}
-...
-if err != nil {
-	error400(w, err)
-	return
-}
-```
-
-
-Handle request
---------------
-```python
-@app.post('/')
-def handle():
-    try:
-        bottle.response.set_header("Content-Type", "text/plain")
-        body = bottle.request.body.read()
-        data = parse(body)
-        s = "%s's age is %s\n" % (data["name"], int(data["age"]))
-        return s
-    except (StandardError,) as exc:
-        raise bottle.HTTPError(status=400, body=exc)
-```
-```go
-func handle(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain")
-	body, _ := ioutil.ReadAll(r.Body)
-	data, err := parse(body)
-	if err != nil {
-		error400(w, err)
-		return
-	}
-	s := fmt.Sprintf("%s's age is %d\n", data["name"], int(data["age"].(float64)))
-	fmt.Fprint(w, s)
-}
-```
-
-Parse request
--------------
-```python
-def parse(body):
-    data = json.loads(body)
-    for field in ["name", "age"]:
-        if field not in data:
-            raise ValueError("'%s' is required" % field)
-    if not isinstance(data["age"], (int, float)):
-        raise ValueError("'age' must be a number")
-    return data
-```
-```go
-func parse(body []byte) (map[string]interface{}, error) {
-	data := map[string]interface{}{}
-	err := json.Unmarshal(body, &data)
-	if err != nil {
-		return nil, err
-	}
-	for _, field := range []string{"name", "age"} {
-		if _, ok := data[field]; !ok {
-			return nil, fmt.Errorf("'%s' is required", field)
-		}
-	}
-	switch data["age"].(type) {
-	case float64:
-		break
-	default:
-		return nil, fmt.Errorf("'age' must be a number")
-	}
-	return data, nil
-}
-```
-
-
 Run Tests
 ---------
 ```shell
@@ -185,45 +67,3 @@ python srv_test.py
 go test ./...
 ```
 
-
-```python
-app = webtest.TestApp(srv.app)
-...
-tests = [
-    {"in": '{"name":"Monkey","age":10}', "out": "Monkey's age is 10\n", "code": 200},
-    ...
-]
-for test in tests:
-    response = app.post('/', test["in"], status=test["code"])
-    self.assertEqual(response.body, test["out"])
-    self.assertEqual(response.status_int, test["code"])
-```
-```go
-ts := httptest.NewServer(nil)
-defer ts.Close()
-...
-tests := []struct{
-	in string
-	out string
-	status int
-}{
-	{`{"name":"Monkey","age":10}`, "Monkey's age is 10\n", 200},
-}
-for _, test := range tests   {
-	res, err := http.Post(ts.URL, "application/json", strings.NewReader(test.in))
-	if err != nil {
-		t.Fatal(err)
-	}
-	body, err := ioutil.ReadAll(res.Body)
-	res.Body.Close()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(body) != test.out {
-		t.Fatalf("expected '%s', got '%s'", test.out, string(body))
-	}
-	if res.StatusCode != test.status {
-		t.Fatalf("expected code %d, got %d", test.status, res.StatusCode)
-	}
-}
-```

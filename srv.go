@@ -8,16 +8,25 @@ import (
 )
 
 func handle(w http.ResponseWriter, r *http.Request) error {
+
+	// this is like python 'finally'
 	defer r.Body.Close()
 
+	// anonymous struct: https://talks.golang.org/2012/10things.slide#2
 	var data struct {
 		Name string
-		Age  float64
+		Age  int64
 	}
 
+	// using struct for data ensures that if Name is not a string or age
+	// is not a number there is an error
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 		return err
 	}
+
+	// 'zero' value (value set by go on creation) for string is "", for
+	// float64 is 0, so when data struct is created, its Name == "" and
+	// Age == 0.
 	if data.Name == "" || data.Age == 0 {
 		return fmt.Errorf("name and age are required")
 	}
@@ -41,7 +50,7 @@ func errorHandler(h func(http.ResponseWriter, *http.Request) error) http.Handler
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := h(w, r); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
-			log.Println("bad request: %v", err)
+			log.Printf("bad request: %v\n", err)
 		}
 	}
 }
