@@ -3,7 +3,7 @@ RESTful app in Python translated into Go
 
 This branch has as close a translation from python to go as possible.
 Look at the
-(go-idiomatic)[https://github.com/mkocikowski/bottle2go/tree/go-idiomatic]
+[go-idiomatic](https://github.com/mkocikowski/bottle2go/tree/go-idiomatic)
 branch to see the 'proper' go way of doing this. (thanks
 https://github.com/campoy !)
 
