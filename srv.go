@@ -1,66 +1,47 @@
 package main
 
 import (
-	"log"
-	"fmt"
-	"net/http"
-	"io/ioutil"
 	"encoding/json"
-// 	"text/template"
+	"fmt"
+	"log"
+	"net/http"
 )
 
-func init() {
-	log.SetFlags(log.LstdFlags | log.Llongfile)
-	http.HandleFunc("/", handle)
-}
+func handle(w http.ResponseWriter, r *http.Request) error {
+	defer r.Body.Close()
 
-func error400(w http.ResponseWriter, err error) {
-	log.Println(err)
-	http.Error(w, "400 Bad Request: " + err.Error(), 400)
-}
-
-func parse(body []byte) (map[string]interface{}, error) {
-
-	data := map[string]interface{}{}
-	err := json.Unmarshal(body, &data)
-	if err != nil {
-		return nil, err
+	var data struct {
+		Name string
+		Age  float64
 	}
 
-	for _, field := range []string{"name", "age"} {
-		if _, ok := data[field]; !ok {
-			return nil, fmt.Errorf("'%s' is required", field)
-		}
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		return err
+	}
+	if data.Name == "" || data.Age == 0 {
+		return fmt.Errorf("name and age are required")
 	}
 
-	switch data["age"].(type) {
-	case float64:
-		break
-	default:
-		return nil, fmt.Errorf("'age' must be a number")
-	}
-
-	return data, nil
-}
-
-func handle(w http.ResponseWriter, r *http.Request) {
-
-	w.Header().Set("Content-Type", "text/plain")
-	body, _ := ioutil.ReadAll(r.Body)
-
-	data, err := parse(body)
-	if err != nil {
-		error400(w, err)
-		return
-	}
-
-	s := fmt.Sprintf("%s's age is %d\n", data["name"], int(data["age"].(float64)))
-	fmt.Fprint(w, s)
+	fmt.Fprintf(w, "%v's age is %v\n", data.Name, data.Age)
+	return nil
 }
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Llongfile)
+	http.HandleFunc("/", errorHandler(handle))
 	err := http.ListenAndServe("127.0.0.1:8082", nil)
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+// errorHandler handles the errors returned by an http handler,
+// almost like a Python decorator.
+func errorHandler(h func(http.ResponseWriter, *http.Request) error) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := h(w, r); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			log.Println("bad request: %v", err)
+		}
 	}
 }
